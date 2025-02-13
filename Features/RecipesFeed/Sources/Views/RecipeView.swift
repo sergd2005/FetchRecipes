@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WebImageView
 
 public struct RecipeView: View {
     private let recipe: Recipe
@@ -16,14 +17,13 @@ public struct RecipeView: View {
     
     public var body: some View {
         VStack {
-            AsyncImage(url: URL(string: recipe.photoURLLarge)) { image in
+            WebImageView(url: URL(string: recipe.photoURLLarge)) { image in
                 image.resizable()
                     .aspectRatio(contentMode: .fit)
                     .cornerRadius(15)
-            } placeholder: {
+            } placeHolder: {
                 ProgressView()
             }
-            
             .padding()
             Text("Name: " + recipe.name)
             Text("Cuisine: " + recipe.cuisine)
