@@ -8,14 +8,12 @@ enum ImageDownloaderError: Error {
 }
 
 actor ImageDownloader {
-    func downloadImage<Content: View, PlaceHolder: View>(for webImageView: WebImageView<Content, PlaceHolder>) async throws {
-        guard let url = webImageView.url else { return }
+    func downloadImage(from url: URL?) async throws -> UIImage? {
+        guard let url = url else { return nil }
         let (imageData, response) = try await URLSession.shared.data(from: url)
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else { throw ImageDownloaderError.badHttpResponse }
-        Task { @MainActor in
-            webImageView.viewModel.image = UIImage(data: imageData)
-        }
+        return UIImage(data: imageData)
     }
 }
 
@@ -25,9 +23,9 @@ final class ViewModel: ObservableObject {
 
 public struct WebImageView<Content: View, PlaceHolder: View>: View {
     private let downloader = ImageDownloader()
-    var url: URL?
+    private let url: URL?
     
-    @ObservedObject var viewModel = ViewModel()
+    @ObservedObject private var viewModel = ViewModel()
     
     @ViewBuilder
     private let content: (Image) -> Content
@@ -50,9 +48,8 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
     }
     
     private func downloadImage() {
-        guard let url = url else { return }
-        Task {
-            try await downloader.downloadImage(for: self)
+        Task { @MainActor in
+            viewModel.image = try await downloader.downloadImage(from: url)
         }
     }
 }
