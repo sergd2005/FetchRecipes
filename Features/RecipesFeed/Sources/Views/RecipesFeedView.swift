@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct RecipesFeedView: View {
+public struct RecipesFeedView: View {
     @ObservedObject private var viewModel: RecipesFeedViewModel
     
-    init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(recipes: [])) {
+    public init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(recipes: [])) {
         self.viewModel = viewModel
     }
     
-    var body: some View {
+    public var body: some View {
         ScrollView {
             LazyVStack {
                 ForEach(viewModel.recipes) {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RecipesFeed
 
 @main
 struct FetchRecipesApp: App {

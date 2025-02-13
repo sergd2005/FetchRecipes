@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct RecipeView: View {
+public struct RecipeView: View {
     private let recipe: Recipe
     
     init(recipe: Recipe) {
         self.recipe = recipe
     }
     
-    var body: some View {
+    public var body: some View {
         VStack {
             AsyncImage(url: URL(string: recipe.photoURLLarge)) { image in
                 image.resizable()

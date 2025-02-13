@@ -6,10 +6,10 @@
 //
 import Foundation
 
-class RecipesFeedViewModel: ObservableObject {
+public class RecipesFeedViewModel: ObservableObject {
     @Published var recipes: [Recipe]
     
-    init(recipes: [Recipe]) {
+    public init(recipes: [Recipe]) {
         self.recipes = recipes
     }
 }

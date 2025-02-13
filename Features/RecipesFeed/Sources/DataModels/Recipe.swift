@@ -7,10 +7,11 @@
 
 import Foundation
 
-struct Feed: Codable {
+public struct Feed: Codable {
     let recipes: [Recipe]
 }
-struct Recipe: Codable {
+
+public struct Recipe: Codable {
     let cuisine, name: String
     let photoURLLarge, photoURLSmall: String
     let sourceURL: String?
@@ -29,7 +30,7 @@ struct Recipe: Codable {
 
 // MARK:
 extension Recipe: Identifiable {
-    var id: String {
+    public var id: String {
         uuid
     }
 }
