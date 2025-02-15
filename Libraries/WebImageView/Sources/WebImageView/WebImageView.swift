@@ -15,7 +15,7 @@ actor ImageDownloader {
     
     private init() {}
     
-    func downloadImage<Content: View, PlaceHolder: View>(from url: URL, for webImageView: WebImageView<Content, PlaceHolder>) async {
+    func downloadImage(from url: URL, for delegate: ImageDownloaderDelegate) async {
         guard tasks[url] == nil else { return }
         let task = Task {
             defer {
@@ -26,13 +26,9 @@ actor ImageDownloader {
                 guard let httpResponse = response as? HTTPURLResponse,
                       httpResponse.statusCode == 200 else { throw ImageDownloaderError.badHttpResponse }
                 guard let image = UIImage(data: imageData) else { throw ImageDownloaderError.badImageData }
-                Task { @MainActor in
-                    webImageView.viewModel.image = image
-                }
+                await delegate.imageDownloadComplete(result: .success(image))
             } catch(let error) {
-                Task { @MainActor in
-                    webImageView.viewModel.error = error
-                }
+                await delegate.imageDownloadComplete(result: .failure(error))
             }
         }
         tasks[url] = task
@@ -42,6 +38,10 @@ actor ImageDownloader {
 final class ViewModel: ObservableObject {
     @Published var image: UIImage?
     @Published var error: Error?
+}
+
+protocol ImageDownloaderDelegate {
+    func imageDownloadComplete(result: Result<UIImage, Error>) async
 }
 
 public struct WebImageView<Content: View, PlaceHolder: View>: View {
@@ -69,6 +69,18 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
                     guard let url else { return }
                     await ImageDownloader.shared.downloadImage(from: url, for: self)
                 }
+        }
+    }
+}
+
+// MARK: ImageDownloaderDelegate
+extension WebImageView: ImageDownloaderDelegate {
+    func imageDownloadComplete(result: Result<UIImage, any Error>) async {
+        switch result {
+        case .success(let image):
+            viewModel.image = image
+        case .failure(let error):
+            viewModel.error = error
         }
     }
 }
