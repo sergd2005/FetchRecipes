@@ -5,27 +5,49 @@ import SwiftUI
 
 enum ImageDownloaderError: Error {
     case badHttpResponse
+    case badImageData
 }
 
 actor ImageDownloader {
-    func downloadImage(from url: URL?) async throws -> UIImage? {
-        guard let url = url else { return nil }
-        let (imageData, response) = try await URLSession.shared.data(from: url)
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else { throw ImageDownloaderError.badHttpResponse }
-        return UIImage(data: imageData)
+    static let shared = ImageDownloader()
+    
+    var tasks = [URL: Task<Void, Never>]()
+    
+    private init() {}
+    
+    func downloadImage<Content: View, PlaceHolder: View>(from url: URL, for webImageView: WebImageView<Content, PlaceHolder>) async {
+        guard tasks[url] == nil else { return }
+        let task = Task {
+            defer {
+                tasks[url] = nil
+            }
+            do {
+                let (imageData, response) = try await URLSession.shared.data(from: url)
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else { throw ImageDownloaderError.badHttpResponse }
+                guard let image = UIImage(data: imageData) else { throw ImageDownloaderError.badImageData }
+                Task { @MainActor in
+                    webImageView.viewModel.image = image
+                }
+            } catch(let error) {
+                Task { @MainActor in
+                    webImageView.viewModel.error = error
+                }
+            }
+        }
+        tasks[url] = task
     }
 }
 
 final class ViewModel: ObservableObject {
     @Published var image: UIImage?
+    @Published var error: Error?
 }
 
 public struct WebImageView<Content: View, PlaceHolder: View>: View {
-    private let downloader = ImageDownloader()
     private let url: URL?
     
-    @ObservedObject private var viewModel = ViewModel()
+    @ObservedObject var viewModel = ViewModel()
     
     @ViewBuilder
     private let content: (Image) -> Content
@@ -36,7 +58,6 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
         self.url = url
         self.content = content
         self.placeHolder = placeHolder
-        downloadImage()
     }
     
     public var body: some View {
@@ -44,12 +65,10 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
             content(Image(uiImage: image))
         } else {
             placeHolder()
-        }
-    }
-    
-    private func downloadImage() {
-        Task { @MainActor in
-            viewModel.image = try await downloader.downloadImage(from: url)
+                .task {
+                    guard let url else { return }
+                    await ImageDownloader.shared.downloadImage(from: url, for: self)
+                }
         }
     }
 }
