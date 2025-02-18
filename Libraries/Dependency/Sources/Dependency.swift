@@ -16,17 +16,17 @@ public struct Dependencies {
     
     nonisolated(unsafe) static var dependecies = Dependencies()
     
-    static subscript<K>(key: K.Type) -> K.DependencyType where K : DependencyProviding {
+    public static subscript<K>(key: K.Type) -> K.DependencyType where K : DependencyProviding {
         get { key.dependency }
     }
     
-    static subscript<T>(_ keyPath: KeyPath<Dependencies, T>) -> T {
+    public static subscript<T>(_ keyPath: KeyPath<Dependencies, T>) -> T {
         get { dependecies[keyPath: keyPath] }
     }
 }
 
 @propertyWrapper
-public struct Dependency<T> {
+public struct Dependency<T>: Sendable {
     private let keyPath: KeyPath<Dependencies, T>
     
     public var wrappedValue: T {
@@ -36,5 +36,9 @@ public struct Dependency<T> {
     public init(_ keyPath: KeyPath<Dependencies, T>) {
         self.keyPath = keyPath
     }
+}
+
+extension KeyPath: @unchecked Sendable {
+    
 }
 
