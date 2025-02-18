@@ -3,43 +3,37 @@
 //
 import Foundation
 
-public protocol InjectionKey {
+public protocol DependencyProviding {
 
     /// The associated type representing the type of the dependency injection key's value.
-    associatedtype Value
+    associatedtype DependencyType
 
     /// The default value for the dependency injection key.
-    static var currentValue: Self.Value { get set }
+    static var dependency: Self.DependencyType { get set }
 }
 
-public struct InjectedValues {
+public struct Dependencies {
     
-    /// This is only used as an accessor to the computed properties within extensions of `InjectedValues`.
-    nonisolated(unsafe) static var current = InjectedValues()
+    nonisolated(unsafe) static var dependecies = Dependencies()
     
-    /// A static subscript for updating the `currentValue` of `InjectionKey` instances.
-    static subscript<K>(key: K.Type) -> K.Value where K : InjectionKey {
-        get { key.currentValue }
-        set { key.currentValue = newValue }
+    static subscript<K>(key: K.Type) -> K.DependencyType where K : DependencyProviding {
+        get { key.dependency }
     }
     
-    /// A static subscript accessor for updating and references dependencies directly.
-    static subscript<T>(_ keyPath: WritableKeyPath<InjectedValues, T>) -> T {
-        get { current[keyPath: keyPath] }
-        set { current[keyPath: keyPath] = newValue }
+    static subscript<T>(_ keyPath: KeyPath<Dependencies, T>) -> T {
+        get { dependecies[keyPath: keyPath] }
     }
 }
 
 @propertyWrapper
-public struct Injected<T> {
-    private let keyPath: WritableKeyPath<InjectedValues, T>
+public struct Dependency<T> {
+    private let keyPath: KeyPath<Dependencies, T>
     
     public var wrappedValue: T {
-        get { InjectedValues[keyPath] }
-        set { InjectedValues[keyPath] = newValue }
+        get { Dependencies[keyPath] }
     }
     
-    public init(_ keyPath: WritableKeyPath<InjectedValues, T>) {
+    public init(_ keyPath: KeyPath<Dependencies, T>) {
         self.keyPath = keyPath
     }
 }

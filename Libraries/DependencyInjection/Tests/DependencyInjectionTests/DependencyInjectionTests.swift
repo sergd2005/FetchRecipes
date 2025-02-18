@@ -1,15 +1,14 @@
 import Testing
 @testable import DependencyInjection
 
-extension InjectedValues {
+extension Dependencies {
     var networkProvider: any NetworkProviding {
-        get { Self.self[NetworkProviderKey.self] }
-        set { Self.self[NetworkProviderKey.self] = newValue }
+        get { Self[NetworkDependencyProvider.self] }
     }
 }
 
-private struct NetworkProviderKey: InjectionKey {
-    nonisolated(unsafe) static var currentValue: any NetworkProviding = NetworkProvider()
+private struct NetworkDependencyProvider: DependencyProviding {
+    nonisolated(unsafe) static var dependency: any NetworkProviding = NetworkProvider()
 }
 
 protocol NetworkProviding {
@@ -29,7 +28,7 @@ struct MockedNetworkProvider: NetworkProviding, Equatable {
 }
 
 struct DataController {
-    @Injected(\.networkProvider) var networkProvider: any NetworkProviding
+    @Dependency(\.networkProvider) var networkProvider: any NetworkProviding
     
     func performDataRequest() {
         networkProvider.requestData()
@@ -37,14 +36,14 @@ struct DataController {
 }
 
 @Test func injection() async throws {
-    var dataController = DataController()
-    #expect(dataController.networkProvider as! NetworkProvider == InjectedValues.current.networkProvider as! NetworkProvider)
+    let dataController = DataController()
+    #expect(dataController.networkProvider as! NetworkProvider == Dependencies.dependecies.networkProvider as! NetworkProvider)
 
     let mockedNetworkProvider = MockedNetworkProvider()
-    InjectedValues[\.networkProvider] = mockedNetworkProvider
+    NetworkDependencyProvider.dependency = mockedNetworkProvider
     #expect(dataController.networkProvider as! MockedNetworkProvider == mockedNetworkProvider)
     
     let networkProvider = NetworkProvider()
-    dataController.networkProvider = networkProvider
+    NetworkDependencyProvider.dependency = networkProvider
     #expect(dataController.networkProvider as! NetworkProvider == networkProvider)
 }
