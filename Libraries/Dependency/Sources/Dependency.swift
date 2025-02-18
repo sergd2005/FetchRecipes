@@ -16,7 +16,7 @@ public struct Dependencies {
     
     nonisolated(unsafe) static var dependecies = Dependencies()
     
-    public static subscript<K>(key: K.Type) -> K.DependencyType where K : DependencyProviding {
+    public static subscript<K: DependencyProviding>(key: K.Type) -> K.DependencyType {
         get { key.dependency }
     }
     

@@ -25,7 +25,8 @@ let package = Package(
             dependencies: ["NetworkProvider"]),
         .testTarget(
             name: "ImageDownloaderTests",
-            dependencies: ["ImageDownloader"]
+            dependencies: ["ImageDownloader"],
+            resources: [.copy("Resources/testImage.png")]
         ),
     ]
 )

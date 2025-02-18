@@ -6,27 +6,50 @@ import UIKit
 @testable import ImageDownloader
 @testable import NetworkProvider
 
-final class MockNetworkProvider : NetworkProviding {
+actor MockNetworkProvider : NetworkProviding {
+    var dataToReturn = Data()
+    var urlResponse = URLResponse()
+    var requestedURL: URL?
+    
     func data(from url: URL, delegate: (any URLSessionTaskDelegate)?) async throws -> (Data, URLResponse) {
-        (Data(), URLResponse())
+        requestedURL = url
+        return (dataToReturn, urlResponse)
     }
     
     func data(from url: URL) async throws -> (Data, URLResponse) {
         try await data(from: url, delegate: nil)
     }
+    
+    func setData(data: Data, urlResponse: URLResponse) async {
+        dataToReturn = data
+        self.urlResponse = urlResponse
+    }
 }
 
-struct ImageDownloaderTests {
+actor ImageDownloaderTests {
+    
     @Dependency(\.imageDownloader) var imageDownloader: any ImageDownloadProviding
     
     @Test func download() async throws {
-        NetworkDependencyProvider.dependency = MockNetworkProvider()
-        await imageDownloader.downloadImage(from: URL(string:"https://first.com")!, for: self)
-    }
-}
-
-extension ImageDownloaderTests: ImageDownloadProvidingDelegate {
-    func imageDownloadComplete(result: Result<UIImage, any Error>) async {
+        let imageURL = URL(string:"https://first.com")!
+        let testImageUrl = Bundle.module.url(forResource: "testImage", withExtension: "png")
+        let testImageData = try Data(contentsOf: testImageUrl!)
         
+        let mockNetworkProvider = MockNetworkProvider()
+        
+        await mockNetworkProvider.setData(data: testImageData, urlResponse: HTTPURLResponse(url: imageURL, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        
+        NetworkDependencyProvider.dependency = mockNetworkProvider
+        
+        let result = await imageDownloader.downloadImage(from: imageURL).result
+        
+        switch result {
+        case .success(let downloadedImage):
+            #expect(downloadedImage != nil)
+        case .failure(let error):
+            #expect(error == nil)
+        }
+        #expect(await mockNetworkProvider.requestedURL == imageURL)
     }
+    
 }
