@@ -4,28 +4,28 @@
 import PackageDescription
 
 let package = Package(
-    name: "ImageDownloader",
+    name: "WebImage",
     platforms: [
         .iOS(.v16)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "ImageDownloader",
-            targets: ["ImageDownloader"]),
+            name: "WebImage",
+            targets: ["WebImage"]),
     ],
     dependencies: [
-        .package(path: "../NetworkProvider")
+        .package(path: "../Network")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "ImageDownloader",
-            dependencies: ["NetworkProvider"]),
+            name: "WebImage",
+            dependencies: ["Network"]),
         .testTarget(
-            name: "ImageDownloaderTests",
-            dependencies: ["ImageDownloader"],
+            name: "WebImageTests",
+            dependencies: ["WebImage"],
             resources: [.copy("Resources/testImage.png")]
         ),
     ]

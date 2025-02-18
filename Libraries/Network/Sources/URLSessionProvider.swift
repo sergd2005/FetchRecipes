@@ -2,12 +2,7 @@
 // https://docs.swift.org/swift-book
 import Foundation
 
-public protocol NetworkProviding: Sendable {
-    func data(from url: URL, delegate: (any URLSessionTaskDelegate)? ) async throws -> (Data, URLResponse)
-    func data(from url: URL) async throws -> (Data, URLResponse)
-}
-
-public final class NetworkProvider: NetworkProviding {
+public final class URLSessionProvider: NetworkProviding {
     public init() {}
     
     public func data(from url: URL, delegate: (any URLSessionTaskDelegate)? = nil) async throws -> (Data, URLResponse) {
@@ -15,7 +10,7 @@ public final class NetworkProvider: NetworkProviding {
     }
     
     public func data(from url: URL) async throws -> (Data, URLResponse) {
-        try await data(from: url)
+        try await data(from: url, delegate: nil)
     }
 }
 
