@@ -34,7 +34,6 @@ public struct RecipesFeedView: View {
             } catch(let error) {
                 print(error)
             }
-//            await let welcome = try? JSONDecoder().decode([Recipe.self], from: jsonData)
         }
     }
 }

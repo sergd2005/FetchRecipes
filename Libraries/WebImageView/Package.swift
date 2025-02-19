@@ -15,14 +15,14 @@ let package = Package(
             targets: ["WebImageView"]),
     ],
     dependencies: [
-        .package(path: "../../Libraries/ImageDownloader")
+        .package(path: "../../Libraries/WebImage")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "WebImageView",
-            dependencies: ["ImageDownloader"]),
+            dependencies: ["WebImage"]),
         .testTarget(
             name: "WebImageViewTests",
             dependencies: ["WebImageView"]

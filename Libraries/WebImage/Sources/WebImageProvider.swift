@@ -14,7 +14,7 @@ public actor WebImageProvider: WebImageProviding {
     
     var tasks = [URL: Task<UIImage, Error>]()
     
-    init(networkProvider: any NetworkProviding = URLSessionProvider()) {
+    public init(networkProvider: any NetworkProviding = URLSessionProvider()) {
         self.networkProvider = networkProvider
     }
     

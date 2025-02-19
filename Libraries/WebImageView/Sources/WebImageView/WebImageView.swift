@@ -2,7 +2,7 @@
 // https://docs.swift.org/swift-book
 
 import SwiftUI
-import ImageDownloader
+import WebImage
 
 final class ViewModel: ObservableObject {
     @Published var image: UIImage?
@@ -11,6 +11,7 @@ final class ViewModel: ObservableObject {
 
 public struct WebImageView<Content: View, PlaceHolder: View>: View {
     private let url: URL?
+    private let webImageProvider: any WebImageProviding
     
     @ObservedObject var viewModel = ViewModel()
     
@@ -19,10 +20,11 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
     @ViewBuilder
     private let placeHolder: () -> PlaceHolder
 
-    public init(url: URL? = nil, @ViewBuilder content: @escaping (Image) -> Content, placeHolder: @escaping () -> PlaceHolder) {
+    public init(url: URL? = nil, webImageProvider: any WebImageProviding = WebImageProvider(), @ViewBuilder content: @escaping (Image) -> Content, placeHolder: @escaping () -> PlaceHolder) {
         self.url = url
         self.content = content
         self.placeHolder = placeHolder
+        self.webImageProvider = webImageProvider
     }
     
     public var body: some View {
@@ -32,20 +34,13 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
             placeHolder()
                 .task {
                     guard let url else { return }
-                    await ImageDownloader.shared.downloadImage(from: url, for: self)
+                    do {
+                        viewModel.image = try await webImageProvider.downloadImage(from: url).value
+                    } catch {
+                        // TODO: handle error
+                    }
                 }
         }
     }
 }
 
-// MARK: ImageDownloaderDelegate
-extension WebImageView: ImageDownloaderDelegate {
-    public func imageDownloadComplete(result: Result<UIImage, any Error>) async {
-        switch result {
-        case .success(let image):
-            viewModel.image = image
-        case .failure(let error):
-            viewModel.error = error
-        }
-    }
-}
