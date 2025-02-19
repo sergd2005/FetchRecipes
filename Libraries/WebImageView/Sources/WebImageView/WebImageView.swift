@@ -12,6 +12,7 @@ final class ViewModel: ObservableObject {
 public struct WebImageView<Content: View, PlaceHolder: View>: View {
     private let url: URL?
     private let webImageProvider: any WebImageProviding
+    private let cacheKey: ((URL) -> String)?
     
     @ObservedObject var viewModel = ViewModel()
     
@@ -20,11 +21,12 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
     @ViewBuilder
     private let placeHolder: () -> PlaceHolder
 
-    public init(url: URL? = nil, webImageProvider: any WebImageProviding = WebImageProvider(), @ViewBuilder content: @escaping (Image) -> Content, placeHolder: @escaping () -> PlaceHolder) {
+    public init(url: URL? = nil, cacheKey: ((URL) -> String)? = nil, webImageProvider: any WebImageProviding = WebImageProvider(), @ViewBuilder content: @escaping (Image) -> Content, placeHolder: @escaping () -> PlaceHolder) {
         self.url = url
         self.content = content
         self.placeHolder = placeHolder
         self.webImageProvider = webImageProvider
+        self.cacheKey = cacheKey
     }
     
     public var body: some View {
@@ -35,7 +37,7 @@ public struct WebImageView<Content: View, PlaceHolder: View>: View {
                 .task {
                     guard let url else { return }
                     do {
-                        viewModel.image = try await webImageProvider.downloadImage(from: url).value
+                        viewModel.image = try await webImageProvider.downloadImage(from: url, cacheKey: cacheKey?(url)).value
                     } catch {
                         // TODO: handle error
                     }

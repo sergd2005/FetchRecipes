@@ -6,18 +6,23 @@
 //
 
 import SwiftUI
+import WebImage
 import WebImageView
 
 public struct RecipeView: View {
     private let recipe: Recipe
+    let webImageProvider: any WebImageProviding
     
-    init(recipe: Recipe) {
+    init(recipe: Recipe, webImageProvider: any WebImageProviding = WebImageProvider()) {
         self.recipe = recipe
+        self.webImageProvider = webImageProvider
     }
     
     public var body: some View {
         VStack {
-            WebImageView(url: URL(string: recipe.photoURLLarge)) { image in
+            WebImageView(url: URL(string: recipe.photoURLLarge),
+                         cacheKey: { $0.pathComponents[$0.pathComponents.count - 2] },
+                         webImageProvider: webImageProvider) { image in
                 image.resizable()
                     .aspectRatio(contentMode: .fit)
                     .cornerRadius(15)

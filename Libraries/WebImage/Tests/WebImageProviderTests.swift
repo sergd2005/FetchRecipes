@@ -2,6 +2,7 @@ import Testing
 import Foundation
 import UIKit
 import Network
+import Storage
 
 @testable import WebImage
 
@@ -27,13 +28,32 @@ actor MockNetworkProvider : NetworkProviding {
     }
 }
 
-actor WebImageProviderTests {
-        
+actor MockStorage: StorageProviding {
+    var storedData: Data?
+    var storedId: String?
+    var dataToReturn: Data?
+    
+    func save(data: Data, with id: String) async throws {
+        storedData = data
+        storedId = id
+    }
+    
+    func readData(with id: String) async -> Data? {
+        dataToReturn
+    }
+    
+    func setDataToReturn(_ data: Data?) async {
+        dataToReturn = data
+    }
+}
+
+struct WebImageProviderTests {
     let mockNetworkProvider = MockNetworkProvider()
+    let mockStorage = MockStorage()
     let webImageProvider: WebImageProvider
     
     init () {
-        webImageProvider = WebImageProvider(networkProvider: mockNetworkProvider)
+        webImageProvider = WebImageProvider(networkProvider: mockNetworkProvider, storage: mockStorage)
     }
     
     @Test func successfulDownload() async throws {
@@ -140,4 +160,56 @@ actor WebImageProviderTests {
         #expect(await mockNetworkProvider.requestedURL == imageURL)
     }
     
+    
+    @Test func readCachedImage() async throws {
+        let imageURL = URL(string:"https://first.com/1.png")!
+        let testImageUrl = Bundle.module.url(forResource: "testImage", withExtension: "png")
+        let testImageData = try Data(contentsOf: testImageUrl!)
+        
+        await mockStorage.setDataToReturn(testImageData)
+        
+        await mockNetworkProvider.setData(data: Data(), urlResponse: HTTPURLResponse(url: imageURL, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        
+        let result = await webImageProvider.downloadImage(from: imageURL).result
+        
+        var returnedError: WebImageProvidingError?
+        var returnedImage: UIImage?
+        
+        switch result {
+        case .success(let downloadedImage):
+            returnedImage = downloadedImage
+        case .failure(let error):
+            returnedError = error as? WebImageProvidingError
+        }
+        
+        #expect(returnedError == nil)
+        #expect(returnedImage != nil)
+        #expect(await mockNetworkProvider.requestedURL == nil)
+    }
+    
+    @Test func saveImageToCache() async throws {
+        let imageURL = URL(string:"https://first.com/1.png")!
+        let testImageUrl = Bundle.module.url(forResource: "testImage", withExtension: "png")
+        let testImageData = try Data(contentsOf: testImageUrl!)
+        
+        await mockNetworkProvider.setData(data: testImageData, urlResponse: HTTPURLResponse(url: imageURL, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        
+        let result = await webImageProvider.downloadImage(from: imageURL).result
+        
+        var returnedError: WebImageProvidingError?
+        var returnedImage: UIImage?
+        
+        switch result {
+        case .success(let downloadedImage):
+            returnedImage = downloadedImage
+        case .failure(let error):
+            returnedError = error as? WebImageProvidingError
+        }
+        
+        #expect(returnedError == nil)
+        #expect(returnedImage != nil)
+        #expect(await mockNetworkProvider.requestedURL == imageURL)
+        #expect(await mockStorage.storedId == "1.png")
+        #expect(await mockStorage.storedData == testImageData)
+    }
 }

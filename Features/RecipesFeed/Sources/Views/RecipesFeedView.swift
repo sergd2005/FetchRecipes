@@ -6,19 +6,22 @@
 //
 
 import SwiftUI
+import WebImage
 
 public struct RecipesFeedView: View {
     @ObservedObject private var viewModel: RecipesFeedViewModel
+    let webImageProvider: any WebImageProviding
     
-    public init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(recipes: [])) {
+    public init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(recipes: []), webImageProvider: any WebImageProviding = WebImageProvider()) {
         self.viewModel = viewModel
+        self.webImageProvider = webImageProvider
     }
     
     public var body: some View {
         ScrollView {
             LazyVStack {
                 ForEach(viewModel.recipes) {
-                    RecipeView(recipe: $0)
+                    RecipeView(recipe: $0, webImageProvider: webImageProvider)
                 }
                 Spacer()
             }
@@ -26,6 +29,7 @@ public struct RecipesFeedView: View {
         .padding()
         .task {
             do {
+                // TODO: handle mailformed and empty response.
                 let (jsonData, response) = try await URLSession.shared.data(from: URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!)
                 guard let httpResponse = response as? HTTPURLResponse,
                       httpResponse.statusCode == 200 else { return }
