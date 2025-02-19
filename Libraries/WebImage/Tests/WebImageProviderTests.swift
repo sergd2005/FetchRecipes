@@ -60,6 +60,42 @@ actor WebImageProviderTests {
         #expect(await mockNetworkProvider.requestedURL == imageURL)
     }
     
+    @Test func successfulDownloadSimulatnious() async throws {
+        let imageURL = URL(string:"https://first.com")!
+        let testImageUrl = Bundle.module.url(forResource: "testImage", withExtension: "png")
+        let testImageData = try Data(contentsOf: testImageUrl!)
+ 
+        await mockNetworkProvider.setData(data: testImageData, urlResponse: HTTPURLResponse(url: imageURL, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        
+        async let result1 = webImageProvider.downloadImage(from: imageURL).result
+        async let result2 = webImageProvider.downloadImage(from: imageURL).result
+        
+        var returnedError: WebImageProvidingError?
+        var returnedImage: UIImage?
+        
+        switch await result1 {
+        case .success(let downloadedImage):
+            returnedImage = downloadedImage
+        case .failure(let error):
+            returnedError = error as? WebImageProvidingError
+        }
+        
+        #expect(returnedError == nil)
+        #expect(returnedImage != nil)
+        #expect(await mockNetworkProvider.requestedURL == imageURL)
+        
+        switch await result2 {
+        case .success(let downloadedImage):
+            returnedImage = downloadedImage
+        case .failure(let error):
+            returnedError = error as? WebImageProvidingError
+        }
+        
+        #expect(returnedError == nil)
+        #expect(returnedImage != nil)
+        #expect(await mockNetworkProvider.requestedURL == imageURL)
+    }
+    
     @Test func wrongHTTPCode() async {
         let imageURL = URL(string:"https://first.com")!
 
