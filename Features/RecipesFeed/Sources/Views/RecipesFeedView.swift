@@ -11,33 +11,55 @@ import WebImage
 public struct RecipesFeedView: View {
     @ObservedObject private var viewModel: RecipesFeedViewModel
     let webImageProvider: any WebImageProviding
+    let recipesFeedApi: any RecipesFeedProviding
     
-    public init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(recipes: []), webImageProvider: any WebImageProviding = WebImageProvider()) {
+    public init(viewModel: RecipesFeedViewModel = RecipesFeedViewModel(), recipesFeedApi: any RecipesFeedProviding = RecipesFeedApi(), webImageProvider: any WebImageProviding = WebImageProvider()) {
         self.viewModel = viewModel
         self.webImageProvider = webImageProvider
+        self.recipesFeedApi = recipesFeedApi
     }
     
     public var body: some View {
-        ScrollView {
-            LazyVStack {
-                ForEach(viewModel.recipes) {
-                    RecipeView(recipe: $0, webImageProvider: webImageProvider)
+        VStack {
+            if let recipes = viewModel.recipes {
+                if recipes.isEmpty {
+                    Text("No recipes are available!")
+                    Button("Reload") {
+                        Task {
+                            await loadFeed(from: URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!)
+                        }
+                    }
+                } else {
+                    ScrollView {
+                        LazyVStack {
+                            ForEach(recipes) {
+                                RecipeView(recipe: $0, webImageProvider: webImageProvider)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .refreshable {
+                        await loadFeed()
+                    }
                 }
-                Spacer()
             }
         }
         .padding()
         .task {
-            do {
-                // TODO: handle mailformed and empty response.
-                let (jsonData, response) = try await URLSession.shared.data(from: URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!)
-                guard let httpResponse = response as? HTTPURLResponse,
-                      httpResponse.statusCode == 200 else { return }
-                let recipes = try JSONDecoder().decode(Feed.self, from: jsonData)
-                self.viewModel.recipes = recipes.recipes
-            } catch(let error) {
-                print(error)
-            }
+            await loadFeed()
+        }
+    }
+    
+    func loadFeed(from url: URL? = nil) async {
+        do {
+            // MARK: change urls to test scenarios
+            /// all recipes: https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json
+            /// malformed: https://d3jbb8n5wk0qxi.cloudfront.net/recipes-malformed.json
+            /// empty data: https://d3jbb8n5wk0qxi.cloudfront.net/recipes-empty.json
+            let feed = try await recipesFeedApi.fetchRecipesFeed(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!)
+            viewModel.recipes = feed.recipes
+        } catch(let error) {
+            print(error)
         }
     }
 }
@@ -60,3 +82,8 @@ public struct RecipesFeedView: View {
                youtubeURL: "https://www.youtube.com/watch?v=rp8Slv4INLk")
     ]))
 }
+
+#Preview("Empty Recipes List") {
+    RecipesFeedView(viewModel: RecipesFeedViewModel(recipes: []))
+}
+

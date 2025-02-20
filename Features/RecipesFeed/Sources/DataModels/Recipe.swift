@@ -7,11 +7,11 @@
 
 import Foundation
 
-public struct Feed: Codable {
+public struct Feed: Codable, Sendable {
     let recipes: [Recipe]
 }
 
-public struct Recipe: Codable {
+public struct Recipe: Codable, Sendable {
     let cuisine, name: String
     let photoURLLarge, photoURLSmall: String
     let sourceURL: String?

@@ -7,9 +7,9 @@
 import Foundation
 
 public class RecipesFeedViewModel: ObservableObject {
-    @Published var recipes: [Recipe]
+    @Published var recipes: [Recipe]?
     
-    public init(recipes: [Recipe]) {
+    public init(recipes: [Recipe]? = nil) {
         self.recipes = recipes
     }
 }
