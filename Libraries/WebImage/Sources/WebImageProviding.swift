@@ -9,6 +9,5 @@ import Foundation
 import UIKit
 
 public protocol WebImageProviding: Sendable {
-    func downloadImage(from url: URL, cacheKey: String?) async -> Task<UIImage, Error>
     func downloadImage(from url: URL) async -> Task<UIImage, Error>
 }
