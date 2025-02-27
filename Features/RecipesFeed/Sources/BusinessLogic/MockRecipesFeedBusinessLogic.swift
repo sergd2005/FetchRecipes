@@ -7,8 +7,8 @@
 import Foundation
 
 actor MockRecipesFeedBusinessLogic: RecipesFeedBusinessLogicProvidable {
-    var feedToReturn: [Recipe]?
-    var error: Error?
+    private var feedToReturn: [Recipe]?
+    private var error: Error?
     
     init(feedToReturn: [Recipe]? = nil, error: Error? = nil) {
         self.feedToReturn = feedToReturn
@@ -23,5 +23,10 @@ actor MockRecipesFeedBusinessLogic: RecipesFeedBusinessLogicProvidable {
             throw error
         }
         return []
+    }
+    
+    func setFeed(_ feed: [Recipe]? = nil, error: Error? = nil) {
+        self.feedToReturn = feed
+        self.error = error
     }
 }

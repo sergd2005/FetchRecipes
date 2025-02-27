@@ -29,8 +29,10 @@ public struct RecipesFeedView: View {
             .task {
                 loadFeed()
             }
-        case .error(let error):
-            Text("Error occured:\(error)")
+        case .feedError(let error):
+            Text("Feed error occured: \(error)")
+        case .undefinedError(let error):
+            Text("Undefined error occured: \(error)")
         case .loading:
             ProgressView()
         case .feedLoaded(let recipes):
@@ -61,7 +63,9 @@ public struct RecipesFeedView: View {
     }
     
     func loadFeed() {
-        viewModel.fetchRecipes()
+        Task {
+            await viewModel.fetchRecipes()
+        }
     }
 }
 
@@ -86,5 +90,9 @@ public struct RecipesFeedView: View {
 
 #Preview("Empty Recipes List") {
     RecipesFeedView(viewModel: RecipesFeedViewModel(businessLogic: MockRecipesFeedBusinessLogic(feedToReturn: [])))
+}
+
+#Preview("Feed Error") {
+    RecipesFeedView(viewModel: RecipesFeedViewModel(businessLogic: MockRecipesFeedBusinessLogic(error: RecipesFeedApiError.badHttpResponse)))
 }
 
