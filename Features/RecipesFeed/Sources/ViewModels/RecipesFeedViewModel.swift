@@ -6,10 +6,31 @@
 //
 import Foundation
 
-public class RecipesFeedViewModel: ObservableObject {
-    @Published var recipes: [Recipe]?
+@MainActor
+final class RecipesFeedViewModel: ObservableObject {
+    enum State {
+        case none
+        case loading
+        case error(Error)
+        case feedLoaded([Recipe])
+    }
     
-    public init(recipes: [Recipe]? = nil) {
-        self.recipes = recipes
+    private let businessLogic: any RecipesFeedBusinessLogicProvidable
+    
+    @Published var state: State = .none
+    
+    init(businessLogic: any RecipesFeedBusinessLogicProvidable = RecipesFeedBusinessLogic()) {
+        self.businessLogic = businessLogic
+    }
+    
+    func fetchRecipes() {
+        Task {
+            do {
+                state = .loading
+                state = .feedLoaded(try await businessLogic.loadFeed())
+            } catch(let error) {
+                state = .error(error)
+            }
+        }
     }
 }
