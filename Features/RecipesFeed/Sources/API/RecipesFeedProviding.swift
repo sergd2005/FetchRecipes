@@ -7,5 +7,5 @@
 import Foundation
 
 public protocol RecipesFeedProviding: Sendable {
-    func fetchRecipesFeed(from url: URL) async throws -> Feed
+    func fetchRecipesFeed() async throws -> Feed
 }

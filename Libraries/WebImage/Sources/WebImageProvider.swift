@@ -21,14 +21,14 @@ public actor WebImageProvider: WebImageProviding {
         self.storage = storage
     }
     
-    public func downloadImage(from url: URL, cacheKey: String?) async -> Task<UIImage, Error> {
+    public func downloadImage(from url: URL) async -> Task<UIImage, Error> {
         guard tasks[url] == nil else { return tasks[url]! }
         let task = Task {
             defer {
                 tasks[url] = nil
             }
             // TODO: get key from URL
-            if let storedImageData = await storage.readData(with: cacheKey ?? url.lastPathComponent) {
+            if let storedImageData = await storage.readData(with: url.cacheKey ?? url.path) {
                 guard let image = UIImage(data: storedImageData) else { throw WebImageProvidingError.badImageData }
                 return image
             } else {
@@ -37,15 +37,18 @@ public actor WebImageProvider: WebImageProviding {
                       httpResponse.statusCode == 200 else { throw WebImageProvidingError.badHttpResponse }
                 guard let image = UIImage(data: imageData) else { throw WebImageProvidingError.badImageData }
                 // TODO: store in separate task, update tests to handle that case
-                try await storage.save(data: imageData, with: cacheKey ?? url.lastPathComponent)
+                try await storage.save(data: imageData, with: url.cacheKey ?? url.path)
                 return image
             }
         }
         tasks[url] = task
         return task
     }
-    
-    public func downloadImage(from url: URL) async -> Task<UIImage, Error> {
-        await downloadImage(from: url, cacheKey: nil)
+}
+
+extension URL {
+    var cacheKey: String? {
+        // TODO: handle different urls here
+        return pathComponents[pathComponents.count - 2]
     }
 }

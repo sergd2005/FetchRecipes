@@ -34,3 +34,7 @@ extension Recipe: Identifiable {
         uuid
     }
 }
+
+extension Recipe: Equatable {
+    
+}

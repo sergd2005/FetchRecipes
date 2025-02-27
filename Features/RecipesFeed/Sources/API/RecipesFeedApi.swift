@@ -14,6 +14,14 @@ public enum RecipesFeedApiError: Error {
 }
 
 public final class RecipesFeedApi {
+    
+    // MARK: change urls to test scenarios
+    /// all recipes: https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json
+    /// malformed: https://d3jbb8n5wk0qxi.cloudfront.net/recipes-malformed.json
+    /// empty data: https://d3jbb8n5wk0qxi.cloudfront.net/recipes-empty.json
+    /// 
+    private let url = URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!
+    
     let networkProvider: any NetworkProviding
     
     public init(networkProvider: any NetworkProviding = URLSessionProvider()) {
@@ -23,7 +31,7 @@ public final class RecipesFeedApi {
 
 // MARK: RecipesFeedProviding
 extension RecipesFeedApi: RecipesFeedProviding {
-    public func fetchRecipesFeed(from url: URL) async throws -> Feed {
+    public func fetchRecipesFeed() async throws -> Feed {
         let (jsonData, response) = try await networkProvider.data(from: url)
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else { throw RecipesFeedApiError.badHttpResponse }
